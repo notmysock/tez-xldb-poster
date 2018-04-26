@@ -105,7 +105,7 @@ Geographical containment conditions like \texttt{ST\_Contains(area, point)} are 
 
 \textbf{Genome Edit distance}:
 Computing edit distance values of all elements within a large set and filtering them for similarity requires a cross-product distribution. This can 
-be expressed as a cross join with a join condition which could distance by executing \texttt{LevenshteinDistance(a,b) <= n}.
+be expressed as a cross join with a condition which limits maxmimum edit distance by executing \texttt{LevenshteinDistance(a,b) <= n}.
 
 \textbf{BiTemporal Overlaps}:
 Industrial IoT historian tools utilize BiTemporal tables which allow for compression of values and the metric system to evolve over time, by storing a
