@@ -2,6 +2,7 @@
 \documentclass[final]{beamer}
 
 \usepackage[scale=1.24]{beamerposter} % Use the beamerposter package for laying out the poster
+\usepackage{ragged2e}
 
 \usetheme{confposter} % Use the confposter theme supplied with this template
 
@@ -40,11 +41,14 @@
 %	TITLE SECTION 
 %----------------------------------------------------------------------------------------
 
-\title{Tez X-Prod: } % Poster title
+\title{X-Prod: Efficient and Scalable Cartesian Product distribution} % Poster title
 
-\author{matematika.pl} % Author(s)
+\author{
+Gopal Vijayaraghavan, Zhiyuan Yang, Hitesh Shah \\ 
+\{gopalv,zhiyuany,hitesh\}@apache.org
+} % Author(s)
 
-\institute{2015} % Institution(s)
+\institute{Apache Tez} % Institution(s)
 
 %----------------------------------------------------------------------------------------
 
@@ -68,14 +72,14 @@
 %	OBJECTIVES
 %----------------------------------------------------------------------------------------
 
-\begin{alertblock}{Objectives}
-Objectives for today:
+\begin{alertblock}{Apache Tez}
+Apache Tez is a DAG processing engine built on top of Apache Hadoop YARN. It offers
 \begin{itemize}
-\item Introducing specific vocabulary.
-\item Quick revision of quadratic function.
-\item Factorising Quadratics.
-\item Proving Vieta's formulas.
-\item Carrying out gained knowledge by working out some word problems.
+\item Performance gains over Map Reduce 
+\item Low level dataflow APIs
+\item Plugin architecture for control plane
+\item Dynamic physical flow decisions
+\item Plan reconfiguration at runtime 
 \end{itemize}
 
 \end{alertblock}
@@ -84,39 +88,31 @@ Objectives for today:
 %	QUICK REVISION
 %----------------------------------------------------------------------------------------
 
-\begin{block}{Quick Revision}
+\begin{block}{Cartesian Product Problems}
+%\textbf{Problems which generate cross-products}
+%\begin{itemize}
+%\item {Non-equality $\Theta$-joins} 
+%\item {Geographical containment} 
+%\item {Genome Edit distance} 
+%\item {BiTemporal overlaps}
+%\end{itemize}
+\textbf{Non-equality Theta Joins}:
+Theta joins are generalized joins which require a sub-set of cross-product to be selected by 
+a non-equality like \texttt{a <> b} or a complex condition like \texttt{suspect = seller or suspect = buyer}.
 
-\textbf{Forms of Quadratic Function}
-\begin{itemize}
-\item $f(x) = ax^2+bx+c$ is called the \textbf{standard form}.
-\item $f(x) = a(x-x_1)(x-x_2)$ is called the \textbf{factored form}, where $x_1$ and $x_2$ are the roots of the quadratic function.
-\item $f(x) = a(x-h)^2+k$ is called the \textbf{vertex form}.
-\end{itemize}
+\textbf{Geographical containment}:
+Geographical containment conditions like \texttt{ST\_Contains(area, point)} are expressed as cross-products with filters in the absence of spatial indices.
 
-\textbf{Delta $\Delta$}\\*
-$\Delta$ determines tells us how many solutions quadratic equation have:
-$$\text{number of solutions}=
-\begin{cases}
-2 &\text{when } \Delta > 0\\
-1 &\text{when } \Delta = 0\\
-0 &\text{when } \Delta < 0
-\end{cases}
-$$
+\textbf{Genome Edit distance}:
+Computing edit distance values of all elements within a large set and filtering them for similarity requires a cross-product distribution. This can 
+be expressed as a cross join with a join condition which could distance by executing \texttt{LevenshteinDistance(a,b) <= n}.
 
-
-\textbf{The Quadratic Formula}
-$$x = \frac{-b\pm \sqrt{\Delta}}{2a}$$
-
-\textbf{Graph of Quadratic Function}
-
+\textbf{BiTemporal Overlaps}:
+Industrial IoT historian tools utilize BiTemporal tables which allow for compression of values and the metric system to evolve over time, by storing a
+tuple like \texttt{(from, to, identifier, metric, value)} to indicate steady state during a time period.
+Processing these data streams to answer complex queries such as \textit{"what was the altitude when the RPM was above X and the temperature was above Y"}
+generates self cross-products with \texttt{OVERLAPS(period1, period2)} to generate the wide steady-state table.
 \end{block}
-
-%------------------------------------------------
-
-\begin{figure}
-\includegraphics[width=0.8\linewidth]{1.jpg}
-\caption{Graph of $f(x)=ax^2|_{\{0.1, 0.3, 1.0, 3.0\}}$}
-\end{figure}
 
 %----------------------------------------------------------------------------------------
 
@@ -134,19 +130,13 @@ $$x = \frac{-b\pm \sqrt{\Delta}}{2a}$$
 %	MATERIALS
 %----------------------------------------------------------------------------------------
 
-\begin{block}{Factorising a Quadratic}
+\begin{block}{Map Reduce \& Shuffle}
 
-Factorising a quadratic means putting it into two brackets, and is useful if you're trying to draw a graph of a quadratic solve a quadratic equation. It's pretty easy if $a=1$ (in $ax^2+bx+c$ form), but can be a real pain otherwise.
-\newline
-\newline
-In order to factorise a quadratic you should follow steps outlined below:
+Map Reduce has a Shuffle operation that naturally produces a hash distribution useful for equi-joins.
 
-\begin{enumerate}
-\item Rearrange the equation into the standard $ax^2+bx+c$ form.
-\item Write down two brackets: $(x\ \ \ )(x\ \ \ )$
-\item Find two numbers that multiply to give 'c' and add or subtract to give 'b' (ignoring signs).
-\item Put the numbers in brackets and choose their signs.
-\end{enumerate}
+\begin{figure}
+\includegraphics{figures/mr-shuffle.png}
+\end{figure}
 
 \end{block}
 
@@ -160,13 +150,13 @@ In order to factorise a quadratic you should follow steps outlined below:
 %	P
 %----------------------------------------------------------------------------------------
 
-\begin{block}{Factorising- Tasks}
-1. Factorise $x^2-x-12$.
-\[\]
-\[\]
-\[\]
-\[\]
-2. Solve $x^2-8=2x$ by factorising.
+\begin{block}{Tez \& Shuffle}
+
+Tez can define the distribution function to produce a full product of data partitions.
+
+\begin{figure}
+\includegraphics{figures/X-prod-1.png}
+\end{figure}
 
 \end{block}
 
@@ -180,9 +170,11 @@ In order to factorise a quadratic you should follow steps outlined below:
 %	IMPORTANT To REMEMBER
 %----------------------------------------------------------------------------------------
 
-\begin{alertblock}{Myth of Delta $\Delta$}
+\begin{alertblock}{Tez: EdgeManager plugins}
 
-It's commonly believed that in order to work out roots of a quadratic function you must count $\Delta$ and use other previously established formulas. However this is untrue since factorising in many cases is as good or even better than simply counting $\Delta$.
+Where Map Reduce comes with a single configuration for the Shuffle Edge between Map \& Reduce vertices,
+Tez makes the Edge as a routing layer for \texttt{DataMovementEvent}, which can be duplicated
+between tasks or multiplexed multiple events to one task.
 
 \end{alertblock} 
 
@@ -193,22 +185,20 @@ It's commonly believed that in order to work out roots of a quadratic function y
 \begin{column}{\onecolwid} % The first column within column 2 (column 2.1)
 
 %----------------------------------------------------------------------------------------
-%	EXAMPLE OF FACTORISATION
+% Tez Cross-product #1	
 %----------------------------------------------------------------------------------------
 
-\begin{block}{Example of Factorisation}
-Solve $x^2+4x-21=0$ by factorising.
+\begin{block}{Map-Reduce: Synthetic Join}
 
-$$x^2+4x-21=(x\ \ \ \ \ )(x\ \ \ \ \ )$$
-$1$ and $21$ multiply to give $21$ - and add or subtract to give $22$ and $20$.\\*
-$3$ and $7$ multiply to give $21$ - and add or subtract to give $10$ and \textbf{$4$}.
+\begin{figure}
+\includegraphics{figures/gfcross.png}
+\end{figure}
 
-$$x^2+4x+21 = (x+7)(x-3)$$
-
-And solving the equation:
-$$(x+7)(x-3)=0$$
-we get
-$$x=-7,\ \ \ x=3$$
+Map-Reduce can effectively produce a join on synthetic keys and force the hash distribution
+function to do a cross-product distribution. This duplicates the data on the 
+source side, which makes increased parallelism for destination tasks more expensive.
+Tez can produce the same destination distribution without the data repetition, by generating 
+${N}^2$ events for shuffle.
 
 \end{block}
 
@@ -222,20 +212,20 @@ $$x=-7,\ \ \ x=3$$
 %	PROOF OF VIETA'S FORMULAS
 %----------------------------------------------------------------------------------------
 
-\begin{block}{ Proof of Vieta's Formulas}
-Let's prove that:
-$$x_1 + x_2 = \frac{-b}{a}$$
-When $\Delta$ is positive we have two roots:
-$$x_1 = \frac{-b-\sqrt{\Delta}}{2a},\ \ \ x_2 = \frac{-b+\sqrt{\Delta}}{2a}$$
+\begin{block}{Tez: X-Product}
 
-Substituting for $x_1$ and $x_2$ respectively, we receive:
-					
-$$x_1 + x_2 = \frac{-b-\sqrt{\Delta}}{2a} + \frac{-b+\sqrt{\Delta}}{2a} =$$
-$$ = \frac{(-b-\sqrt{\Delta}) + (-b+\sqrt{\Delta})}{2a} = \frac{-2b}{2a} = \frac{-b}{a}$$
-                    
-The same we could do with another pattern, which state that $x_1 x_2 = \frac{c}{a}$, but proving this is going to be your task in next section.
+
+\begin{figure}
+\includegraphics{figures/Tez-XProd-1.png}
+\end{figure}
+
+The fundamental disadvantage of a product of shuffle partitions is that to produce ${N}^2$ reduce tasks,
+there are N data partitions from each source task, which incurs a large number of random seek IO operations.
+The \texttt{DataMovementEvent} routing pattern allows Tez to avoid that and produce a product of the source
+task indices to produce parallelism for the reducers without splitting up the output of the map-tasks.
 
 \end{block}
+
 
 %----------------------------------------------------------------------------------------
 
@@ -253,66 +243,36 @@ The same we could do with another pattern, which state that $x_1 x_2 = \frac{c}{
 %	CONCLUSION
 %----------------------------------------------------------------------------------------
 
-\begin{block}{Vieta's Formulas- Task}
-1. Prove that $$x_1x_2 = \frac{c}{a}$$
-\[\]
-\[\]
-\[\]
-\[\]
-\[\]
+\begin{block}{Tez: Skewed X-Product}
+
+\begin{figure}
+\includegraphics{figures/Tez-XProd-2.png}
+\end{figure}
+
+The presence of input skew into the Cross Product can result in uneven distribution to the reducers, this can be
+mitigated by writing partitioned output from each source task and merging adjacent partitions using size information
+encoded into the \texttt{DataMovementEvent}. This removes the random seeks when the reads are merged, but it can group
+across partitions and tasks at the same time.
 
 \end{block}
-
 
 %----------------------------------------------------------------------------------------
 %	ACKNOWLEDGEMENTS
 %----------------------------------------------------------------------------------------
 
-\setbeamercolor{block title}{fg=red,bg=white} % Change the block title color
+%\setbeamercolor{block title}{fg=red,bg=white} % Change the block title color
 
-\begin{block}{Glossary}
+\begin{block}{Tez: Fair Grouping}
 
-\begin{table}
-\vspace{2ex}
-\begin{tabular}{l l l l}
-\toprule
-\textbf{verb} & \textbf{noun} & \textbf{meaning}\\
-\midrule
-add & addition & $+$ \\
-subtract & subtraction & $-$ \\
-multiply & multiplication & $\cdot$ \\
-divide & division & $\div$ \\
-solve & solution & getting answer \\
-substitute & substitution & $t=x^2$ \\
+\begin{figure}
+\includegraphics{figures/Data-Grouping.png}
+\end{figure}
 
-
-
-\bottomrule
-\end{tabular}
-\caption{Word Formation}
-\end{table}
-
-
+From the data-size information contained in the \texttt{DataMovementEvent}, the Edge can try to 
+avoid skewed destination tasks by grouping together adjacent regions conditionally, to produce 
+tasks of similar sizes. Fairness computation today is heuristic based and does not wait for 
+perfect information to start scheduling downstream tasks.
 \end{block}
-
-\setbeamercolor{block alerted title}{fg=black,bg=norange} % Change the alert block title colors
-\setbeamercolor{block alerted body}{fg=black,bg=white} % Change the alert block body colors
-
-\begin{alertblock}{Some Necessary and Useful Vocabulary}
-
-\begin{itemize}
-\item (n.) sign $\rightarrow$ $+$ or $-$
-\item (n.) equation $\rightarrow something = 0$ 
-\item (n.) factor $\rightarrow$ two multiplied factors give result
-\item (v.) factorise $\rightarrow$ putting into brackets
-\item (n.) coefficient $\rightarrow$ a constant number i.e. $a$, $b$, $c$ in a pattern $ax^2+bx+c$
-\item (n.) quadratic function $\rightarrow$ $f(x) = ax^2+bx+c$
-\item (n.) root $\rightarrow$ $\sqrt{sth}$ or solution of quadratic equation
-\item (n.) formula $=$ pattern
-\end{itemize}
-
-\end{alertblock}
-
 
 %----------------------------------------------------------------------------------------
 
