@@ -173,8 +173,8 @@ Tez can define the distribution function to produce a full product of data parti
 \begin{alertblock}{Tez: EdgeManager plugins}
 
 Where Map Reduce comes with a single configuration for the Shuffle Edge between Map \& Reduce vertices,
-Tez makes the Edge as a routing layer for \texttt{DataMovementEvent}, which can be duplicated
-between tasks or multiplexed multiple events to one task.
+Tez makes the Edge as a pluggable routing layer for \texttt{DataMovementEvent}, which can duplicate them
+between tasks or multiplex multiple events to one task.
 
 \end{alertblock} 
 
@@ -194,7 +194,7 @@ between tasks or multiplexed multiple events to one task.
 \includegraphics{figures/gfcross.png}
 \end{figure}
 
-Map-Reduce can effectively produce a join on synthetic keys and force the hash distribution
+Map-Reduce can produce an equi-join on synthetic keys and force the hash distribution
 function to do a cross-product distribution. This duplicates the data on the 
 source side, which makes increased parallelism for destination tasks more expensive.
 Tez can produce the same destination distribution without the data repetition, by generating 
