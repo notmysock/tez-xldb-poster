@@ -33,6 +33,23 @@
 \setlength{\topmargin}{-0.5in} % Reduce the top margin size
 %-----------------------------------------------------------
 
+\begin{filecontents}{\jobname.bib}
+@inproceedings{saha2015apache,
+  title={Apache tez: A unifying framework for modeling and building data processing applications},
+  author={Saha, Bikas and Shah, Hitesh and Seth, Siddharth and Vijayaraghavan, Gopal and Murthy, Arun and Curino, Carlo},
+  booktitle={Proceedings of the 2015 ACM SIGMOD international conference on Management of Data},
+  pages={1357--1369},
+  year={2015},
+  organization={ACM}
+}
+\end{filecontents}
+
+\usepackage[style=numeric,backend=bibtex]{biblatex}
+%\renewcommand*{\nameyeardelim}{\addcomma\addspace}
+
+\addbibresource{\jobname.bib}
+%-----------------------------------------------------------
+
 \usepackage{graphicx}  % Required for including images
 
 \usepackage{booktabs} % Top and bottom rules for tables
@@ -71,9 +88,9 @@ Gopal Vijayaraghavan, Zhiyuan Yang, Hitesh Shah \\
 %----------------------------------------------------------------------------------------
 %	OBJECTIVES
 %----------------------------------------------------------------------------------------
-
 \begin{alertblock}{Apache Tez}
-Apache Tez is a DAG processing engine built on top of Apache Hadoop YARN. It offers
+Apache Tez
+is a DAG processing engine built on top of Apache Hadoop YARN. It offers
 \begin{itemize}
 \item Performance gains over Map Reduce 
 \item Low level dataflow APIs
@@ -100,22 +117,21 @@ Apache Tez is a DAG processing engine built on top of Apache Hadoop YARN. It off
 Theta joins are generalized joins which require a sub-set of cross-product to be selected by 
 a non-equality like \texttt{a <> b} or a complex condition like \texttt{suspect = seller or suspect = buyer}.
 
-\textbf{Geographical containment}:
+\textbf{Geographical Containment}:
 Geographical containment conditions like \texttt{ST\_Contains(area, point)} are expressed as cross-products with filters in the absence of spatial indices.
 
-\textbf{Genome Edit distance}:
+\textbf{Genome Edit Distance}:
 Computing edit distance values of all elements within a large set and filtering them for similarity requires a cross-product distribution. This can 
 be expressed as a cross join with a condition which limits maxmimum edit distance by executing \texttt{Levenshtein(a,b) <= n}.
 
 \textbf{BiTemporal Overlaps}:
 Industrial IoT historian tools utilize BiTemporal tables which allow for compression of values and the metric system to evolve over time, by storing a
 tuple like \texttt{(from, to, identifier, metric, value)} to indicate steady state during a time period.
-Processing these data streams to answer complex queries such as \textit{"what was the altitude when the RPM was above X and the temperature was above Y"}
-generates self cross-products with \texttt{OVERLAPS(period1, period2)} to generate the wide steady-state table.
+Processing these data streams to answer a complex query such as \textit{"what was the altitude when the RPM was above X and the temperature was above Y"}
+produces a cross-product with \texttt{OVERLAPS(period1, period2)} to generate the wide steady-state table.
 \end{block}
 
 %----------------------------------------------------------------------------------------
-
 \end{column} % End of the first column
 
 \begin{column}{\sepwid}\end{column} % Empty spacer column
@@ -221,8 +237,8 @@ ${N}^2$ events for shuffle.
 
 The fundamental disadvantage of a product of shuffle partitions is that to produce ${N}^2$ reduce tasks,
 there are N data partitions from each source task, which incurs a large number of random seek IO operations.
-The \texttt{DataMovementEvent} routing pattern allows Tez to avoid that and produce a product of the source
-task indices to produce parallelism for the reducers without splitting up the output of the map-tasks.
+The \texttt{DataMovementEvent} routing pattern allows Tez to avoid that by using a product of the source
+task indices for the required reducer parallelism, without splitting up the output of the map-tasks.
 
 \end{block}
 
@@ -249,7 +265,7 @@ task indices to produce parallelism for the reducers without splitting up the ou
 \includegraphics{figures/Tez-XProd-2.png}
 \end{figure}
 
-The presence of input skew into the Cross Product can result in uneven distribution to the reducers, this can be
+The presence of input skew into the Cross Product can result in uneven distribution to the reducers. This can be
 mitigated by writing partitioned output from each source task and merging adjacent partitions using size information
 encoded into the \texttt{DataMovementEvent}. This removes the random seeks when the reads are merged, but it can group
 across partitions and tasks at the same time.
@@ -270,7 +286,7 @@ across partitions and tasks at the same time.
 
 From the data-size information contained in the \texttt{DataMovementEvent}, the Edge can try to 
 avoid skewed destination tasks by grouping together adjacent regions conditionally, to produce 
-tasks of similar sizes. Fairness computation today is heuristic based and does not wait for 
+tasks of similar sizes. Fairness computation today is heuristic-based and does not wait for 
 perfect information to start scheduling downstream tasks.
 \end{block}
 
